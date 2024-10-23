@@ -1,13 +1,20 @@
 package com.example.p7l09guptaaanya;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Paint;
 
 
 public class Sprite extends RectF {     //inherits everything from RectF
     private int dX, dY, color;
+    private static final int BMP_COLUMNS = 7;
+    private static final int BMP_ROWS = 4;
+    private static final int DOWN=0, LEFT=5, RIGHT=5, UP=10;
+    private Bitmap bitmap;
+    private int currentFrame=0, iconWidth, iconHeight, animationDelay=20;
 
     public Sprite(float left, float top, float right, float bottom, int dX, int dY, int color) {
         super(left, top, right, bottom);
@@ -37,12 +44,33 @@ public class Sprite extends RectF {     //inherits everything from RectF
         if(bottom+dY<0)
             offsetTo(left,canvas.getHeight());
         offset(dX,dY);//moves dX to the right and dY downwards
+        if(animationDelay--<0) {//increment to next sprite image after delay
+            currentFrame = ++currentFrame % BMP_COLUMNS;//cycles current image with boundary proteciton
+            animationDelay=20;//arbitrary delay before cycling to next image
+        }
     }
 
     public void draw(Canvas canvas){ //draw itself
-       Paint paint = new Paint();
-       paint.setColor(color);
-       canvas.drawCircle(centerX(), centerY(), width() / 2, paint);//draws circle
+        if(bitmap==null) {//if no bitmap exists draw a red circle
+            Paint paint = new Paint();
+            paint.setColor(color);//sets its color
+            canvas.drawCircle(centerX(), centerY(), width() / 2, paint);//draws circle
+        }else {
+            iconWidth = bitmap.getWidth() / BMP_COLUMNS;//calculate width of 1 image
+            iconHeight = bitmap.getHeight() / BMP_ROWS; //calculate height of 1 image
+            int srcX = currentFrame * iconWidth;       //set x of source rectangle inside of bitmap based on current frame
+            int srcY = getAnimationRow() * iconHeight; //set y to row of bitmap based on direction
+            Rect src = new Rect(srcX, srcY, srcX + iconWidth, srcY + iconHeight);  //defines the rectangle inside of heroBmp to displayed
+            canvas.drawBitmap(bitmap,src, this,null); //draw an image
+        }
+    }
+
+    private int getAnimationRow() {
+        if (Math.abs(dX)>Math.abs(dY)){         //if magnitude of x is bigger than magnitude y
+            if(Math.abs(dX)==dX) return RIGHT;  //if x is positive return row 2 for right
+            else return LEFT;                          //if x is negative return row 1 for left
+        } else if(Math.abs(dY)==dY) return DOWN;      //if y is positive return row 0 for up
+        else return UP;
 
     }
 
@@ -74,6 +102,15 @@ public class Sprite extends RectF {     //inherits everything from RectF
         right=right+i;
         bottom=bottom+i;
     }
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
+
+
 
 
 }
